@@ -1,0 +1,23 @@
+
+> recipe-box@0.1.0 build
+> next build
+
+   ▲ Next.js 16.0.7 (Turbopack)
+   - Environments: .env.local
+
+ ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 4.4s
+   Running TypeScript ...
+Failed to compile.
+
+./reference_ai_chef/vite.config.ts:2:39
+Type error: Cannot find module 'vite' or its corresponding type declarations.
+
+[0m [90m 1 |[39m [36mimport[39m path [36mfrom[39m [32m'path'[39m[33m;[39m
+[31m[1m>[22m[39m[90m 2 |[39m [36mimport[39m { defineConfig[33m,[39m loadEnv } [36mfrom[39m [32m'vite'[39m[33m;[39m
+ [90m   |[39m                                       [31m[1m^[22m[39m
+ [90m 3 |[39m [36mimport[39m react [36mfrom[39m [32m'@vitejs/plugin-react'[39m[33m;[39m
+ [90m 4 |[39m
+ [90m 5 |[39m [36mexport[39m [36mdefault[39m defineConfig(({ mode }) [33m=>[39m {[0m
+Next.js build worker exited with code: 1 and signal: null

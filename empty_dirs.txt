@@ -1,0 +1,3 @@
+﻿C:\Users\Shuvo\recipe-box\node_modules\@rushstack
+C:\Users\Shuvo\recipe-box\node_modules\@ungap
+C:\Users\Shuvo\recipe-box\node_modules\@eslint-community\eslint-utils\node_modules
