@@ -32,8 +32,9 @@ export default function AIChefPage() {
         try {
             const result = await generateChefResponse(term);
             setResponse(result);
-        } catch (err) {
-            setError("Sorry, I couldn't get a response at the moment. Please try again.");
+        } catch (err: any) {
+            console.error("Full Error Object:", err);
+            setError(err.message || "An unexpected error occurred.");
         } finally {
             setLoading(false);
         }
