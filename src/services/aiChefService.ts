@@ -1,8 +1,8 @@
-import { GoogleGenAI } from "@google/genai";
+const OPENROUTER_API_KEY = process.env.NEXT_PUBLIC_OPENROUTER_API_KEY;
 
-const API_KEY = "AIzaSyCJSfOOuXWIPl1UdPitpBc4TwkQamrhhU8";
-
-const ai = new GoogleGenAI({ apiKey: API_KEY });
+if (!OPENROUTER_API_KEY) {
+    console.error("NEXT_PUBLIC_OPENROUTER_API_KEY is not set in environment variables");
+}
 
 export interface Source {
     title: string;
@@ -15,47 +15,61 @@ export interface ChefResponse {
 }
 
 export const generateChefResponse = async (query: string): Promise<ChefResponse> => {
+    if (!OPENROUTER_API_KEY) {
+        throw new Error("OpenRouter API key is not configured. Please set NEXT_PUBLIC_OPENROUTER_API_KEY in your environment.");
+    }
+
     try {
-        const response = await ai.models.generateContent({
-            model: "gemini-2.0-flash",
-            contents: query,
-            config: {
-                tools: [{ googleSearch: {} }],
-                systemInstruction: `You are a world-class chef and culinary expert. 
-        Answer the user's cooking question helpfully, accurately, and concisely.
-        Format your answer with clear Markdown headers, lists, and bold text where appropriate.
-        If the user asks for a recipe, provide ingredients and step-by-step instructions.
-        Always maintain a warm, encouraging tone.
-        `,
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": typeof window !== "undefined" ? window.location.origin : "https://recipe-box.app",
+                "X-Title": "RecipeBox AI Chef",
             },
+            body: JSON.stringify({
+                model: "google/gemini-2.0-flash-001",
+                messages: [
+                    {
+                        role: "system",
+                        content: "You are a helpful culinary assistant. Provide detailed, well-formatted responses about cooking, recipes, and food-related questions."
+                    },
+                    {
+                        role: "user",
+                        content: `Provide a detailed recipe for "${query}". 
+            
+Format the response in a "summary style" with these sections:
+1. Brief Overview
+2. Key Ingredients
+3. Step-by-Step Instructions (numbered)
+4. Pro Tips
+
+Ensure the steps are concise summaries. Use Markdown for formatting.`
+                    }
+                ],
+            }),
         });
 
-        const text = response.text || "I couldn't find an answer to that right now.";
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error("OpenRouter API Error:", errorData);
+            throw new Error(errorData.error?.message || `API request failed with status ${response.status}`);
+        }
 
-        // Extract sources from grounding chunks
+        const data = await response.json();
+        const text = data.choices?.[0]?.message?.content || "I couldn't find an answer to that right now.";
+
+        // OpenRouter doesn't provide grounding sources like Google's native API
+        // Return empty sources array
         const sources: Source[] = [];
-        const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-
-        chunks.forEach((chunk: any) => {
-            if (chunk.web) {
-                sources.push({
-                    title: chunk.web.title || "Web Source",
-                    url: chunk.web.uri,
-                });
-            }
-        });
-
-        // Remove duplicates based on URL
-        const uniqueSources = sources.filter((source, index, self) =>
-            index === self.findIndex((s) => s.url === source.url)
-        );
 
         return {
             text,
-            sources: uniqueSources,
+            sources,
         };
-    } catch (error) {
-        console.error("Gemini API Error:", error);
-        throw error;
+    } catch (error: any) {
+        console.error("OpenRouter API Error:", error);
+        throw new Error(error.message || "Failed to fetch culinary information. Please try again.");
     }
 };
